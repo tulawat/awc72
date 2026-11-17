@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWC72 - การบ้าน</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        /* แถบเมนูนำทาง (Navbar) */
+        nav {
+            background-color: #162d56;
+            padding: 0 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            gap: 10px;
+        }
+
+        .nav-brand {
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 8px 14px;
+            font-size: 0.95rem;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap; /* ป้องกันข้อความตัดขึ้นบรรทัดใหม่ */
+        }
+
+        .nav-link:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-link.active {
+            background-color: #2a5298;
+            color: white;
+            font-weight: 600;
+        }
+
+        .badge {
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+            line-height: 1.2;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            text-align: center;
+            padding: 45px 20px 60px 20px;
+        }
+
+        header h1 { margin: 0; font-size: 2.2rem; letter-spacing: 1px; }
+        header p { margin: 10px 0 0 0; font-size: 1rem; opacity: 0.9; }
+
+        .container {
+            max-width: 850px;
+            margin: -30px auto 60px auto;
+            padding: 0 20px;
+        }
+
+        .homework-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .hw-card {
+            background: white;
+            border-radius: 12px;
+            padding: 22px 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-left: 6px solid #2a5298;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hw-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        /* สีแถบข้างตามความเร่งด่วน */
+        .hw-card.urgent { border-left-color: #ef4444; }
+        .hw-card.soon { border-left-color: #f59e0b; }
+
+        .hw-content { flex: 1; }
+        .hw-title { font-size: 1.2rem; font-weight: 700; color: #1e3c72; margin: 0 0 8px 0; }
+        .hw-desc { font-size: 0.95rem; color: #555; line-height: 1.5; margin: 0; white-space: pre-line; word-break: break-word; }
+        
+        .hw-desc a {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 14px;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border: 1px solid #bfdbfe;
+            transition: all 0.2s;
+        }
+        .hw-desc a:hover {
+            background-color: #2a5298;
+            color: white;
+            border-color: #2a5298;
+        }
+
+        .hw-due-box {
+            text-align: right;
+            min-width: 140px;
+            background: #f1f5f9;
+            padding: 12px 14px;
+            border-radius: 8px;
+        }
+        .hw-due-label { font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 2px; }
+        .hw-due-date { font-size: 0.95rem; font-weight: 700; color: #1e293b; display: block; }
+        .hw-countdown { font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: inline-block; padding: 3px 10px; border-radius: 12px; }
+        
+        .countdown-urgent { background: #fee2e2; color: #dc2626; }
+        .countdown-soon { background: #fef3c7; color: #d97706; }
+        .countdown-normal { background: #e0e7ff; color: #2a5298; }
+
+        /* ปรับขนาดให้พอดีบนหน้าจอมือถือขนาดเล็ก */
+        @media (max-width: 600px) {
+            nav { padding: 0 12px; }
+            .nav-brand { font-size: 1.1rem; }
+            .nav-links { gap: 4px; }
+            .nav-link { padding: 7px 11px; font-size: 0.85rem; gap: 4px; }
+            
+            header h1 { font-size: 1.8rem; }
+            .hw-card { flex-direction: column; padding: 18px 20px; }
+            .hw-due-box { width: 100%; text-align: left; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; }
+        }
+
+        footer { text-align: center; padding: 30px; background-color: #222; color: #aaa; font-size: 0.9rem; }
+        .loading { text-align: center; font-size: 1.15rem; color: #666; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <!-- แถบเมนูด้านบน -->
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">AWC72</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">👥 ทำเนียบรุ่น</a>
+                <a href="homework.html" class="nav-link active">
+                    📝 การบ้าน <span class="badge" id="hwBadge">0</span>
+                </a>
+                <a href="chat.html" class="nav-link">💬 แชต</a>
+            </div>
+        </div>
+    </nav>
+
+    <header>
+        <h1>📝 รายการการบ้าน</h1>
+        <p>รายการงานและกำหนดส่งของรุ่น AWC72 (เรียงตามกำหนดส่งใกล้สุด)</p>
+    </header>
+
+    <div class="container">
+        <div class="homework-list" id="homeworkList">
+            <div class="loading">กำลังโหลดรายการการบ้านจาก Google Sheets...</div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 AWC72 Friends. Crafted with ❤️ by TulaBat.</p>
+    </footer>
+
+    <script>
+        // นำลิงก์ Google Sheet Published CSV (เฉพาะ Worksheet การบ้าน) มาวางตรงนี้ครับ
+        const homeworkSheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTGAfE7-gNL-L4hrcjff0L2rn2uGt-nbkP6cr1Fi-836RMAhBL4FBxebjzwLxTrrLJBRYA9LLUGXpDb/pub?gid=1964507500&single=true&output=csv'; 
+
+        function parseCSV(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentCell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentCell.trim());
+                    currentCell = '';
+                } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') i++;
+                    currentRow.push(currentCell.trim());
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentCell = '';
+                } else {
+                    currentCell += char;
+                }
+            }
+            if (currentCell !== '' || currentRow.length > 0) {
+                currentRow.push(currentCell.trim());
+                rows.push(currentRow);
+            }
+            return rows;
+        }
+
+        function linkifyText(text) {
+            const escapedText = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            const urlPattern = /(https?:\/\/[^\s]+)/g;
+            return escapedText.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">🔗 คลิกที่นี่เพื่อเปิดลิงก์ / ส่งงาน</a>');
+        }
+
+        function parseDueDate(dateStr) {
+            if (!dateStr) return null;
+            const cleanStr = dateStr.trim();
+            let year, month, day;
+
+            if (cleanStr.includes('-')) {
+                const parts = cleanStr.split('-');
+                if (parts[0].length === 4) {
+                    [year, month, day] = parts.map(Number);
+                } else {
+                    [day, month, year] = parts.map(Number);
+                }
+            } else if (cleanStr.includes('/')) {
+                const parts = cleanStr.split('/');
+                if (parts[2].length === 4) {
+                    [day, month, year] = parts.map(Number);
+                } else {
+                    [year, month, day] = parts.map(Number);
+                }
+            } else {
+                const parsed = new Date(cleanStr);
+                if (isNaN(parsed)) return null;
+                parsed.setHours(23, 59, 59, 999);
+                return parsed;
+            }
+
+            if (year > 2400) year -= 543;
+            return new Date(year, month - 1, day, 23, 59, 59, 999);
+        }
+
+        async function fetchHomeworkData() {
+            const hwContainer = document.getElementById('homeworkList');
+            const hwBadge = document.getElementById('hwBadge');
+
+            if (!homeworkSheetCsvUrl || homeworkSheetCsvUrl.includes('ใส่ลิงก์')) {
+                hwContainer.innerHTML = `<div class="loading" style="color: #d97706;">⚠️ กรุณานำลิงก์ Google Sheet (Published CSV) ของชีตการบ้านมาใส่ในตัวแปร <b>homeworkSheetCsvUrl</b> ก่อนนะครับ</div>`;
+                return;
+            }
+
+            try {
+                const cacheBusterUrl = `${homeworkSheetCsvUrl}&t=${new Date().getTime()}`;
+                const response = await fetch(cacheBusterUrl);
+                if (!response.ok) throw new Error('ไม่สามารถโหลดข้อมูลการบ้านได้');
+
+                const rows = parseCSV(await response.text());
+                const now = new Date();
+                const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                let validHomeworks = [];
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < 3 || !row[0] || !row[2]) continue;
+
+                    const title = row[0];
+                    const desc = row[1] || '';
+                    const dueDateObj = parseDueDate(row[2]);
+
+                    if (dueDateObj && dueDateObj >= now) {
+                        validHomeworks.push({
+                            title,
+                            desc,
+                            dueDateObj
+                        });
+                    }
+                }
+
+                validHomeworks.sort((a, b) => a.dueDateObj - b.dueDateObj);
+
+                if (validHomeworks.length > 0) {
+                    hwBadge.textContent = validHomeworks.length;
+                    hwBadge.style.display = 'inline-block';
+                }
+
+                if (validHomeworks.length === 0) {
+                    hwContainer.innerHTML = `
+                        <div class="loading" style="color: #16a34a;">
+                            🎉 เย้! ตอนนี้ไม่มีการบ้านค้างส่งแล้วครับ
+                        </div>`;
+                    return;
+                }
+
+                let hwHTML = '';
+                validHomeworks.forEach(hw => {
+                    const dueDayStart = new Date(hw.dueDateObj.getFullYear(), hw.dueDateObj.getMonth(), hw.dueDateObj.getDate());
+                    const diffDays = Math.round((dueDayStart - todayStart) / (1000 * 60 * 60 * 24));
+
+                    let urgencyClass = '';
+                    let badgeClass = 'countdown-normal';
+                    let countdownText = `เหลือเวลา ${diffDays} วัน`;
+
+                    if (diffDays === 0) {
+                        urgencyClass = 'urgent';
+                        badgeClass = 'countdown-urgent';
+                        countdownText = '🔥 ส่งภายในวันนี้!';
+                    } else if (diffDays === 1) {
+                        urgencyClass = 'urgent';
+                        badgeClass = 'countdown-urgent';
+                        countdownText = '⚠️ ส่งพรุ่งนี้';
+                    } else if (diffDays <= 3) {
+                        urgencyClass = 'soon';
+                        badgeClass = 'countdown-soon';
+                        countdownText = `⏳ เหลือเวลา ${diffDays} วัน`;
+                    }
+
+                    const thaiDate = hw.dueDateObj.toLocaleDateString('th-TH', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+
+                    hwHTML += `
+                        <div class="hw-card ${urgencyClass}">
+                            <div class="hw-content">
+                                <h3 class="hw-title">${hw.title}</h3>
+                                <p class="hw-desc">${linkifyText(hw.desc)}</p>
+                            </div>
+                            <div class="hw-due-box">
+                                <div>
+                                    <span class="hw-due-label">กำหนดส่ง</span>
+                                    <span class="hw-due-date">${thaiDate}</span>
+                                </div>
+                                <span class="hw-countdown ${badgeClass}">${countdownText}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                hwContainer.innerHTML = hwHTML;
+
+            } catch (error) {
+                hwContainer.innerHTML = `<div class="loading" style="color: #dc3545;">❌ ไม่สามารถโหลดข้อมูลการบ้านจาก Google Sheets ได้</div>`;
+                console.error(error);
+            }
+        }
+
+        window.onload = fetchHomeworkData;
+    </script>
+</body>
+</html>

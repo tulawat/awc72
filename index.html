@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWC72 Friendship</title>
+    <!-- ไอคอนสำหรับ Add to Home Screen บน iPhone / iPad -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="AWC72">
+
+    <!-- ไอคอนขนาดเล็กบนแท็บเบราว์เซอร์ (Favicon) -->
+    <link rel="icon" type="image/png" href="apple-touch-icon.png">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        /* แถบเมนูนำทาง (Navbar) */
+        nav {
+            background-color: #162d56;
+            padding: 0 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            gap: 10px;
+        }
+
+        .nav-brand {
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 8px 14px;
+            font-size: 0.95rem;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-link.active {
+            background-color: #2a5298;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* ป้ายตัวเลขแจ้งเตือนสีแดงบนเมนู */
+        .badge {
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+            line-height: 1.2;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            text-align: center;
+            padding: 45px 20px 60px 20px;
+        }
+
+        header h1 { margin: 0; font-size: 2.3rem; letter-spacing: 1px; }
+        header p { margin: 10px 0 0 0; font-size: 1.05rem; opacity: 0.9; }
+
+        /* ช่องค้นหา + ปุ่มสุ่มลำดับ */
+        .search-container {
+            max-width: 540px;
+            margin: -25px auto 40px auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-container input {
+            flex: 1;
+            min-width: 0;
+            padding: 15px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .shuffle-btn {
+            padding: 0 20px;
+            border: none;
+            border-radius: 30px;
+            background: #162d56;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            white-space: nowrap;
+            transition: transform 0.15s ease, background 0.2s ease;
+        }
+
+        .shuffle-btn:hover { background: #2a5298; }
+        .shuffle-btn:active { transform: scale(0.96); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            cursor: pointer; /* แสดงรูปมือชี้ให้รู้ว่ากดดูโปรไฟล์ได้ */
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .avatar-box {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            background-color: #e9ecef;
+        }
+
+        .avatar-box img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .nickname-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(42, 82, 152, 0.85);
+            color: white;
+            padding: 8px 0;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(2px);
+        }
+
+        .info { padding: 20px 15px; }
+        
+        .name { 
+            font-size: 1.15rem; 
+            font-weight: 600; 
+            color: #333; 
+            margin: 0 0 8px 0; 
+        }
+
+        .detail { 
+            font-size: 0.9rem; 
+            color: #666; 
+            line-height: 1.4; 
+            margin: 0; 
+            white-space: pre-line;
+        }
+
+        /* --- สไตล์หน้าต่าง Modal Short Profile --- */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px) scale(0.97); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .modal-card {
+            background: white;
+            width: 100%;
+            max-width: 440px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            position: relative;
+            animation: slideUp 0.25s ease;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.35);
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.65);
+        }
+
+        .modal-header-bg {
+            height: 95px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .modal-avatar-wrapper {
+            width: 120px;
+            height: 120px;
+            margin: -60px auto 12px auto;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            overflow: hidden;
+            background: #e9ecef;
+        }
+
+        .modal-avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-body {
+            padding: 0 24px 28px 24px;
+            text-align: center;
+        }
+
+        .modal-nickname {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #1e3c72;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+
+        .modal-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 10px 0;
+        }
+
+        .modal-quote {
+            font-size: 0.95rem;
+            color: #475569;
+            font-style: italic;
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-left: 3px solid #2a5298;
+            margin: 0 0 18px 0;
+            white-space: pre-line;
+            text-align: left;
+        }
+
+        .modal-info-list {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .modal-info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: #334155;
+            background: #f1f5f9;
+            padding: 10px 14px;
+            border-radius: 10px;
+        }
+
+        .modal-info-icon {
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+
+        .modal-info-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            display: block;
+        }
+
+        .modal-info-value {
+            font-weight: 600;
+            color: #1e293b;
+            word-break: break-word;
+        }
+
+        /* ปุ่มติดต่อ (โทร / Facebook / Instagram) */
+        .modal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            flex: 1;
+            min-width: 110px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: transform 0.15s ease, opacity 0.2s;
+        }
+
+        .action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-phone { background: #16a34a; color: white; }
+        .btn-fb { background: #1877f2; color: white; }
+        .btn-ig { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; }
+
+        @media (max-width: 600px) {
+            nav { padding: 0 12px; }
+            .nav-brand { font-size: 1.1rem; }
+            .nav-links { gap: 4px; }
+            .nav-link { padding: 7px 11px; font-size: 0.85rem; gap: 4px; }
+            
+            header h1 { font-size: 1.8rem; }
+            .search-container { gap: 8px; }
+            .search-container input { padding: 13px 16px; font-size: 0.95rem; }
+            .shuffle-btn { padding: 0 15px; font-size: 0.88rem; }
+        }
+
+        footer { text-align: center; padding: 30px; background-color: #222; color: #aaa; font-size: 0.9rem; }
+        .loading { text-align: center; font-size: 1.15rem; color: #666; padding: 40px; grid-column: 1 / -1; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <!-- แถบเมนูด้านบน -->
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">AWC72</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">👥 ทำเนียบรุ่น</a>
+                <a href="homework.html" class="nav-link">
+                    📝 การบ้าน <span class="badge" id="hwBadge">0</span>
+                </a>
+                <a href="chat.html" class="nav-link">💬 แชต</a>
+            </div>
+        </div>
+    </nav>
+
+    <header>
+        <h1>AWC72 Friends</h1>
+        <p>บันทึกความทรงจำของพวกเราทั้งหมด 129 คน</p>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" onkeyup="filterFriends()" placeholder="🔍 ค้นหาชื่อ, ชื่อเล่น, หน่วยงาน หรือจังหวัด...">
+        <button class="shuffle-btn" onclick="shuffleAndRender()">🔀 สุ่มลำดับ</button>
+    </div>
+
+    <div class="container">
+        <div class="grid" id="friendsGrid">
+            <div class="loading">กำลังโหลดข้อมูลเพื่อนๆ จาก Google Sheets...</div>
+        </div>
+        <div id="noResultMsg" class="loading" style="display: none;">ไม่พบข้อมูลเพื่อนที่ตรงกับคำค้นหา</div>
+    </div>
+
+    <!-- หน้าต่าง Modal แสดง Short Profile -->
+    <div class="modal-backdrop" id="profileModal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeProfileModal()" aria-label="ปิดหน้าต่าง">✕</button>
+            <div class="modal-header-bg"></div>
+            <div class="modal-avatar-wrapper">
+                <img id="modalAvatar" src="" alt="รูปโปรไฟล์">
+            </div>
+            <div class="modal-body">
+                <div class="modal-nickname" id="modalNickname"></div>
+                <h2 class="modal-name" id="modalName"></h2>
+                <div class="modal-quote" id="modalQuote"></div>
+                
+                <div class="modal-info-list" id="modalInfoList"></div>
+                <div class="modal-actions" id="modalActions"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 AWC72 Friends. Crafted with ❤️ by TulaBat.</p>
+    </footer>
+
+    <script>
+        // 1. ลิงก์ Google Sheet Published CSV (ชีตทำเนียบรุ่น)
+        const friendsSheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTGAfE7-gNL-L4hrcjff0L2rn2uGt-nbkP6cr1Fi-836RMAhBL4FBxebjzwLxTrrLJBRYA9LLUGXpDb/pub?gid=0&single=true&output=csv'; 
+
+        // 2. ลิงก์ Google Sheet Published CSV (ชีตการบ้าน - เพื่อดึงตัวเลขมาโชว์บนเมนูทันที)
+        const homeworkSheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTGAfE7-gNL-L4hrcjff0L2rn2uGt-nbkP6cr1Fi-836RMAhBL4FBxebjzwLxTrrLJBRYA9LLUGXpDb/pub?gid=1964507500&single=true&output=csv'; 
+
+        let allFriendsData = [];
+
+        function parseCSV(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentCell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentCell.trim());
+                    currentCell = '';
+                } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') i++;
+                    currentRow.push(currentCell.trim());
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentCell = '';
+                } else {
+                    currentCell += char;
+                }
+            }
+            if (currentCell !== '' || currentRow.length > 0) {
+                currentRow.push(currentCell.trim());
+                rows.push(currentRow);
+            }
+            return rows;
+        }
+
+        function parseDueDate(dateStr) {
+            if (!dateStr) return null;
+            const cleanStr = dateStr.trim();
+            let year, month, day;
+
+            if (cleanStr.includes('-')) {
+                const parts = cleanStr.split('-');
+                if (parts[0].length === 4) {
+                    [year, month, day] = parts.map(Number);
+                } else {
+                    [day, month, year] = parts.map(Number);
+                }
+            } else if (cleanStr.includes('/')) {
+                const parts = cleanStr.split('/');
+                if (parts[2].length === 4) {
+                    [day, month, year] = parts.map(Number);
+                } else {
+                    [year, month, day] = parts.map(Number);
+                }
+            } else {
+                const parsed = new Date(cleanStr);
+                if (isNaN(parsed)) return null;
+                parsed.setHours(23, 59, 59, 999);
+                return parsed;
+            }
+
+            if (year > 2400) year -= 543;
+            return new Date(year, month - 1, day, 23, 59, 59, 999);
+        }
+
+        async function fetchHomeworkBadgeCount() {
+            const hwBadge = document.getElementById('hwBadge');
+            if (!homeworkSheetCsvUrl || homeworkSheetCsvUrl.includes('ใส่ลิงก์')) return;
+
+            try {
+                const cacheBusterUrl = `${homeworkSheetCsvUrl}&t=${new Date().getTime()}`;
+                const response = await fetch(cacheBusterUrl);
+                if (!response.ok) return;
+
+                const rows = parseCSV(await response.text());
+                const now = new Date();
+                let activeCount = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < 3 || !row[0] || !row[2]) continue;
+
+                    const dueDateObj = parseDueDate(row[2]);
+                    if (dueDateObj && dueDateObj >= now) {
+                        activeCount++;
+                    }
+                }
+
+                if (activeCount > 0) {
+                    hwBadge.textContent = activeCount;
+                    hwBadge.style.display = 'inline-block';
+                }
+            } catch (error) {
+                console.error('ไม่สามารถโหลดตัวเลขแจ้งเตือนการบ้านได้:', error);
+            }
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // สร้างลิงก์ Facebook อัตโนมัติ (รองรับทั้งวาง URL เต็ม และพิมพ์แค่ชื่อ)
+        function formatFacebookUrl(fbInput) {
+            const clean = fbInput.trim();
+            if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+            if (clean.includes('facebook.com') || clean.includes('fb.com')) return 'https://' + clean;
+            return `https://www.facebook.com/search/top?q=${encodeURIComponent(clean)}`;
+        }
+
+        // สร้างลิงก์ Instagram อัตโนมัติ (รองรับทั้งวาง URL เต็ม และพิมพ์ @username)
+        function formatInstagramUrl(igInput) {
+            const clean = igInput.trim();
+            if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+            if (clean.includes('instagram.com')) return 'https://' + clean;
+            const username = clean.replace(/^@/, '');
+            return `https://www.instagram.com/${encodeURIComponent(username)}/`;
+        }
+
+        // เปิดหน้าต่าง Modal แสดงข้อมูล Short Profile
+        function openProfileModal(friendNo) {
+            const friend = allFriendsData.find(f => f.no === String(friendNo));
+            if (!friend) return;
+
+            const modal = document.getElementById('profileModal');
+            const avatarImg = document.getElementById('modalAvatar');
+            const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name)}&background=2a5298&color=fff&size=256`;
+
+            avatarImg.onerror = function() {
+                this.onerror = null;
+                this.src = fallbackAvatar;
+            };
+            avatarImg.src = `images/${friend.no}.jpg`;
+
+            // ชื่อเล่น & ชื่อจริง
+            const nicknameEl = document.getElementById('modalNickname');
+            if (friend.nickname) {
+                nicknameEl.textContent = friend.nickname;
+                nicknameEl.style.display = 'inline-block';
+            } else {
+                nicknameEl.style.display = 'none';
+            }
+
+            document.getElementById('modalName').textContent = friend.name;
+
+            // คำคม
+            const quoteEl = document.getElementById('modalQuote');
+            if (friend.detail) {
+                quoteEl.textContent = `"${friend.detail}"`;
+                quoteEl.style.display = 'block';
+            } else {
+                quoteEl.style.display = 'none';
+            }
+
+            // รายละเอียด: ตำแหน่ง, หน่วยงาน, จังหวัด
+            const infoListEl = document.getElementById('modalInfoList');
+            let infoHTML = '';
+
+            if (friend.position) {
+                infoHTML += `
+                    <div class="modal-info-item">
+                        <span class="modal-info-icon">💼</span>
+                        <div>
+                            <span class="modal-info-label">ตำแหน่ง</span>
+                            <span class="modal-info-value">${friend.position}</span>
+                        </div>
+                    </div>`;
+            }
+            if (friend.organization) {
+                infoHTML += `
+                    <div class="modal-info-item">
+                        <span class="modal-info-icon">🏢</span>
+                        <div>
+                            <span class="modal-info-label">หน่วยงาน / สังกัด</span>
+                            <span class="modal-info-value">${friend.organization}</span>
+                        </div>
+                    </div>`;
+            }
+            if (friend.province) {
+                infoHTML += `
+                    <div class="modal-info-item">
+                        <span class="modal-info-icon">📍</span>
+                        <div>
+                            <span class="modal-info-label">จังหวัด</span>
+                            <span class="modal-info-value">${friend.province}</span>
+                        </div>
+                    </div>`;
+            }
+            infoListEl.innerHTML = infoHTML;
+
+            // ปุ่มช่องทางติดต่อ: เบอร์โทร, Facebook, Instagram
+            const actionsEl = document.getElementById('modalActions');
+            let actionsHTML = '';
+
+            if (friend.phone) {
+                const cleanPhone = friend.phone.replace(/[^0-9+]/g, '');
+                actionsHTML += `<a href="tel:${cleanPhone}" class="action-btn btn-phone">📞 ${friend.phone}</a>`;
+            }
+            if (friend.facebook) {
+                actionsHTML += `<a href="${formatFacebookUrl(friend.facebook)}" target="_blank" rel="noopener noreferrer" class="action-btn btn-fb">📘 Facebook</a>`;
+            }
+            if (friend.instagram) {
+                actionsHTML += `<a href="${formatInstagramUrl(friend.instagram)}" target="_blank" rel="noopener noreferrer" class="action-btn btn-ig">📸 Instagram</a>`;
+            }
+            actionsEl.innerHTML = actionsHTML;
+
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden'; // ล็อกไม่ให้หน้าหลังเลื่อนตอนเปิด Modal
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function closeModalOnBackdrop(event) {
+            if (event.target.id === 'profileModal') {
+                closeProfileModal();
+            }
+        }
+
+        // กดปุ่ม ESC บนคีย์บอร์ดเพื่อปิด Modal ได้
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeProfileModal();
+        });
+
+        function shuffleAndRender() {
+            const grid = document.getElementById('friendsGrid');
+            if (allFriendsData.length === 0) return;
+
+            const randomizedFriends = shuffleArray(allFriendsData);
+            let cardsHTML = '';
+
+            randomizedFriends.forEach(friend => {
+                const imageUrl = `images/${friend.no}.jpg`; 
+                const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name)}&background=2a5298&color=fff&size=256`;
+
+                // เก็บข้อมูลเสริมไว้ใน data-search เพื่อให้พิมพ์ค้นหาจากหน่วยงานหรือจังหวัดได้ด้วย
+                const extraSearchData = `${friend.position} ${friend.organization} ${friend.province}`.toLowerCase();
+
+                cardsHTML += `
+                    <div class="card" data-extra="${extraSearchData}" onclick="openProfileModal('${friend.no}')">
+                        <div class="avatar-box">
+                            <img src="${imageUrl}" loading="lazy" alt="รูปของ ${friend.name}" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
+                            ${friend.nickname ? `<div class="nickname-overlay">${friend.nickname}</div>` : ''}
+                        </div>
+                        <div class="info">
+                            <p class="name">${friend.name}</p>
+                            ${friend.detail ? `<p class="detail">"${friend.detail}"</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = cardsHTML;
+
+            if (document.getElementById('searchInput').value.trim() !== '') {
+                filterFriends();
+            }
+        }
+
+        async function fetchFriendsData() {
+            const grid = document.getElementById('friendsGrid');
+
+            if (!friendsSheetCsvUrl || friendsSheetCsvUrl.includes('ใส่ลิงก์')) {
+                grid.innerHTML = `<div class="loading" style="color: #d97706;">⚠️ กรุณานำลิงก์ Google Sheet (Published CSV) ของชีตเพื่อนมาใส่ในตัวแปร <b>friendsSheetCsvUrl</b> ก่อนนะครับ</div>`;
+                return;
+            }
+
+            try {
+                const cacheBusterUrl = `${friendsSheetCsvUrl}&t=${new Date().getTime()}`;
+                const response = await fetch(cacheBusterUrl);
+                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลจาก Google Sheets ได้');
+                
+                const rows = parseCSV(await response.text());
+                allFriendsData = [];
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < 2 || row[0] === "") continue; 
+                    
+                    // อ่านคอลัมน์ A ถึง J ตามลำดับ
+                    allFriendsData.push({
+                        no: String(row[0]).trim(),
+                        name: row[1] || 'ไม่ระบุชื่อ',
+                        nickname: row[2] || '',
+                        detail: row[3] || '',
+                        position: row[4] || '',      // คอลัมน์ E: ตำแหน่ง
+                        organization: row[5] || '',  // คอลัมน์ F: หน่วยงาน
+                        province: row[6] || '',      // คอลัมน์ G: จังหวัด
+                        phone: row[7] || '',         // คอลัมน์ H: เบอร์โทร
+                        facebook: row[8] || '',      // คอลัมน์ I: Facebook
+                        instagram: row[9] || ''      // คอลัมน์ J: Instagram
+                    });
+                }
+
+                shuffleAndRender();
+
+            } catch (error) {
+                grid.innerHTML = `
+                    <div class="loading" style="color: #dc3545;">
+                        ❌ ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้<br>
+                        <span style="font-size: 0.9rem; color: #555; display:block; margin-top:8px;">
+                            กรุณาตรวจสอบลิงก์ Publish to web (.csv) ในตัวแปร <b>friendsSheetCsvUrl</b>
+                        </span>
+                    </div>`;
+                console.error('Error detail:', error);
+            }
+        }
+
+        function filterFriends() {
+            const filter = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.getElementById('friendsGrid').getElementsByClassName('card');
+            let visibleCount = 0;
+
+            for (let i = 0; i < cards.length; i++) {
+                const nameText = cards[i].querySelector('.name')?.textContent || '';
+                const nicknameText = cards[i].querySelector('.nickname-overlay')?.textContent || '';
+                const detailText = cards[i].querySelector('.detail')?.textContent || '';
+                const extraText = cards[i].getAttribute('data-extra') || '';
+                
+                const combinedText = `${nameText} ${nicknameText} ${detailText} ${extraText}`.toLowerCase();
+                
+                if (combinedText.includes(filter)) {
+                    cards[i].style.display = "";
+                    visibleCount++;
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+            document.getElementById('noResultMsg').style.display = (visibleCount === 0 && cards.length > 0) ? "block" : "none";
+        }
+
+        window.onload = () => {
+            fetchFriendsData();
+            fetchHomeworkBadgeCount();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AWC72 - ห้องแชตรุ่น</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="AWC72">
+    <link rel="icon" type="image/png" href="apple-touch-icon.png">
+    
+    <!-- เรียกใช้ MQTT.js สำหรับแชตสดแบบไม่ต้องเก็บ Log -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100dvh; /* พอดีกับความสูงหน้าจอมือถือรวมแถบคีย์บอร์ด */
+        }
+
+        /* แถบเมนูนำทาง (Navbar) */
+        nav {
+            background-color: #162d56;
+            padding: 0 15px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            flex-shrink: 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            gap: 10px;
+        }
+
+        .nav-brand {
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 8px 12px;
+            font-size: 0.92rem;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-link.active {
+            background-color: #2a5298;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* --- หน้ากรอกชื่อก่อนเข้าห้องแชต --- */
+        .login-overlay {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 35px 28px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .login-box h2 {
+            margin: 0 0 8px 0;
+            color: #1e3c72;
+            font-size: 1.6rem;
+        }
+
+        .login-box p {
+            margin: 0 0 24px 0;
+            color: #64748b;
+            font-size: 0.92rem;
+            line-height: 1.4;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            outline: none;
+            margin-bottom: 16px;
+            text-align: center;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .login-box input:focus {
+            border-color: #2a5298;
+        }
+
+        .join-btn {
+            width: 100%;
+            padding: 14px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .join-btn:hover { background: #1e3c72; }
+
+        /* --- พื้นที่ห้องแชต --- */
+        .chat-wrapper {
+            display: none; /* ซ่อนไว้จนกว่าจะกรอกชื่อ */
+            flex: 1;
+            flex-direction: column;
+            max-width: 850px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #f8fafc;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f59e0b; /* สีส้มกำลังเชื่อมต่อ */
+        }
+        .dot.connected { background: #16a34a; } /* สีเขียวเชื่อมต่อสำเร็จ */
+
+        .user-tag {
+            font-size: 0.85rem;
+            color: #475569;
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #eef2f6;
+        }
+
+        .sys-msg {
+            align-self: center;
+            background: rgba(100, 116, 139, 0.15);
+            color: #475569;
+            font-size: 0.8rem;
+            padding: 4px 14px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .msg-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 78%;
+        }
+
+        .msg-row.mine {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .msg-row.others {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .msg-sender {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-bottom: 3px;
+            padding: 0 4px;
+            font-weight: 600;
+        }
+
+        .msg-bubble {
+            padding: 10px 15px;
+            border-radius: 16px;
+            font-size: 0.98rem;
+            line-height: 1.4;
+            word-break: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+
+        .msg-row.mine .msg-bubble {
+            background: #2a5298;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-row.others .msg-bubble {
+            background: white;
+            color: #1e293b;
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 3px;
+            padding: 0 4px;
+        }
+
+        /* แถบพิมพ์ข้อความด้านล่าง */
+        .chat-input-area {
+            padding: 12px 15px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 1px solid #cbd5e1;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .chat-input-area input:focus {
+            border-color: #2a5298;
+        }
+
+        .send-btn {
+            padding: 0 22px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .send-btn:hover { background: #1e3c72; }
+
+        @media (max-width: 600px) {
+            nav { padding: 0 10px; }
+            .nav-brand { font-size: 1.1rem; }
+            .nav-links { gap: 4px; }
+            .nav-link { padding: 6px 9px; font-size: 0.82rem; gap: 3px; }
+            .msg-row { max-width: 85%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- แถบเมนูด้านบน -->
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">AWC72</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">👥 ทำเนียบรุ่น</a>
+                <a href="homework.html" class="nav-link">📝 การบ้าน</a>
+                <a href="chat.html" class="nav-link active">💬 แชต</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ส่วนที่ 1: หน้ากรอกชื่อก่อนเข้าห้อง -->
+    <div class="login-overlay" id="loginScreen">
+        <div class="login-box">
+            <h2>💬 ห้องแชตรุ่น AWC72</h2>
+            <p>แชตสดคุยเล่นขำๆ ไม่มีเก็บประวัติย้อนหลัง<br>ปิดหน้าเว็บแล้วข้อความหายทันที</p>
+            <input type="text" id="usernameInput" placeholder="ใส่ชื่อเล่นของคุณ..." maxlength="25" onkeypress="if(event.key==='Enter') enterChat()">
+            <button class="join-btn" onclick="enterChat()">เข้าห้องแชต</button>
+        </div>
+    </div>
+
+    <!-- ส่วนที่ 2: ห้องแชตสด -->
+    <div class="chat-wrapper" id="chatRoom">
+        <div class="chat-header">
+            <div class="status-indicator">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">กำลังเชื่อมต่อ...</span>
+            </div>
+            <div class="user-tag" id="currentUserTag" title="คลิกเพื่อเปลี่ยนชื่อ" onclick="changeName()">👤 ชื่อของคุณ</div>
+        </div>
+
+        <div class="chat-messages" id="messagesBox">
+            <div class="sys-msg">🔒 ข้อความในห้องนี้เป็นแบบสด ไม่มีการบันทึก Log บนเซิร์ฟเวอร์</div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="msgInput" placeholder="พิมพ์ข้อความคุยกับเพื่อน..." maxlength="300" onkeypress="if(event.key==='Enter') sendMessage()">
+            <button class="send-btn" onclick="sendMessage()">ส่ง</button>
+        </div>
+    </div>
+
+    <script>
+        // ตั้งชื่อช่องสัญญาณเฉพาะของรุ่น AWC72 (เปลี่ยนคำด้านหลังได้ถ้าต้องการความเป็นส่วนตัวมากขึ้น)
+        const CHAT_TOPIC = 'awc72/friendship/livechat/room_01';
+        const BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
+
+        let client = null;
+        let myName = '';
+        let myClientId = 'awc72_' + Math.random().toString(16).substring(2, 8);
+
+        // โหลดชื่อเดิมถ้าเคยพิมพ์ไว้ในแท็บนี้ (ใช้ sessionStorage ปิดแท็บแล้วหาย)
+        window.onload = () => {
+            const savedName = sessionStorage.getItem('awc72_chat_name');
+            if (savedName) {
+                document.getElementById('usernameInput').value = savedName;
+            }
+        };
+
+        function enterChat() {
+            const input = document.getElementById('usernameInput');
+            const name = input.value.trim();
+            if (!name) {
+                alert('กรุณาใส่ชื่อเล่นก่อนเข้าห้องแชตครับ');
+                input.focus();
+                return;
+            }
+
+            myName = name;
+            sessionStorage.setItem('awc72_chat_name', myName);
+
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('chatRoom').style.display = 'flex';
+            document.getElementById('currentUserTag').textContent = `👤 ${myName} (เปลี่ยนชื่อ)`;
+
+            connectMQTT();
+        }
+
+        function changeName() {
+            const newName = prompt('เปลี่ยนชื่อเล่นของคุณ:', myName);
+            if (newName && newName.trim() !== '') {
+                const oldName = myName;
+                myName = newName.trim();
+                sessionStorage.setItem('awc72_chat_name', myName);
+                document.getElementById('currentUserTag').textContent = `👤 ${myName} (เปลี่ยนชื่อ)`;
+                publishPayload({ type: 'system', text: `🔄 "${oldName}" เปลี่ยนชื่อเป็น "${myName}"` });
+            }
+        }
+
+        function connectMQTT() {
+            if (client) return;
+
+            client = mqtt.connect(BROKER_URL, {
+                clientId: myClientId,
+                clean: true
+            });
+
+            client.on('connect', () => {
+                document.getElementById('statusDot').classList.add('connected');
+                document.getElementById('statusText').textContent = 'ออนไลน์ (แชตสด)';
+                
+                client.subscribe(CHAT_TOPIC, (err) => {
+                    if (!err) {
+                        publishPayload({ type: 'system', text: `👋 ${myName} เข้ามาในห้องแชต` });
+                    }
+                });
+            });
+
+            client.on('message', (topic, message) => {
+                try {
+                    const data = JSON.parse(message.toString());
+                    renderMessage(data);
+                } catch (e) {
+                    console.error('Invalid message format');
+                }
+            });
+
+            client.on('offline', () => {
+                document.getElementById('statusDot').classList.remove('connected');
+                document.getElementById('statusText').textContent = 'ขาดการเชื่อมต่อ...';
+            });
+        }
+
+        function publishPayload(payload) {
+            if (client && client.connected) {
+                payload.senderId = myClientId;
+                payload.senderName = myName;
+                payload.time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                // ตั้ง retain: false เพื่อยืนยันว่าไม่มีการเก็บข้อความค้างไว้บน Broker
+                client.publish(CHAT_TOPIC, JSON.stringify(payload), { retain: false });
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            publishPayload({ type: 'chat', text: text });
+            input.value = '';
+            input.focus();
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function renderMessage(data) {
+            const box = document.getElementById('messagesBox');
+
+            if (data.type === 'system') {
+                const sysDiv = document.createElement('div');
+                sysDiv.className = 'sys-msg';
+                sysDiv.textContent = data.text;
+                box.appendChild(sysDiv);
+            } else if (data.type === 'chat') {
+                const isMine = (data.senderId === myClientId);
+                const row = document.createElement('div');
+                row.className = `msg-row ${isMine ? 'mine' : 'others'}`;
+
+                row.innerHTML = `
+                    ${!isMine ? `<span class="msg-sender">${escapeHTML(data.senderName)}</span>` : ''}
+                    <div class="msg-bubble">${escapeHTML(data.text)}</div>
+                    <span class="msg-time">${data.time || ''}</span>
+                `;
+                box.appendChild(row);
+            }
+
+            // เลื่อนลงล่างสุดอัตโนมัติเมื่อมีข้อความใหม่
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html>
